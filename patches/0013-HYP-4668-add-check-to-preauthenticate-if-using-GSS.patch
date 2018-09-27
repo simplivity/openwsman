@@ -1,0 +1,25 @@
+From: Keith Glidewell <keith.glidewell@simplivity.com>
+Date: Mon, 30 Oct 2017 15:30:11 -0400
+Subject: HYP-4668: add check to preauthenticate if using GSS
+
+---
+ src/lib/wsman-curl-client-transport.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/src/lib/wsman-curl-client-transport.c b/src/lib/wsman-curl-client-transport.c
+index f783b48..c36c77d 100644
+--- a/src/lib/wsman-curl-client-transport.c
++++ b/src/lib/wsman-curl-client-transport.c
+@@ -500,6 +500,12 @@ wsmc_handler( WsManClient *cl,
+ 		u_free(_pass);
+ 		_user = wsmc_get_user(cl);
+ 		_pass = wsmc_get_password(cl);
++                // Shortcut to avoid initial 401 if using GSS.
++		if (wsman_is_auth_method(cl, WS_GSSNEGOTIATE_AUTH)) {
++			auth_avail = CURLAUTH_GSSNEGOTIATE;
++			cl->data.auth_set = reauthenticate(cl, cl->data.auth_set, auth_avail,
++								&cl->data.user, &cl->data.pwd);
++		}
+ 		if (_user && _pass && cl->data.auth_set) {
+ 			r = curl_easy_setopt(curl, CURLOPT_HTTPAUTH, cl->data.auth_set);
+ 			if (r != CURLE_OK) {
