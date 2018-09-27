@@ -555,6 +555,12 @@ wsmc_handler( WsManClient *cl,
 		u_free(_pass);
 		_user = wsmc_get_user(cl);
 		_pass = wsmc_get_password(cl);
+                // Shortcut to avoid initial 401 if using GSS.
+		if (wsman_is_auth_method(cl, WS_GSSNEGOTIATE_AUTH)) {
+			auth_avail = CURLAUTH_GSSNEGOTIATE;
+			cl->data.auth_set = reauthenticate(cl, cl->data.auth_set, auth_avail,
+								&cl->data.user, &cl->data.pwd);
+		}
 		if (_user && _pass && cl->data.auth_set) {
 			r = curl_easy_setopt(curl, CURLOPT_HTTPAUTH, cl->data.auth_set);
 			if (r != CURLE_OK) {
